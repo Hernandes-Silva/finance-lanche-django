@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyo
+
+# Virtual environments
+env/
+venv/
+ENV/
+VENV/
+*.env
+*.venv
+.Python
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+local_settings.py
+instance/
+.settings/
+.env
+.env.*
+
+# Django migrations (opcional ignorar tudo exceto __init__.py)
+**/migrations/*
+!**/migrations/__init__.py
+
+# Pytest
+.cache/
+.pytest_cache/
+
+# MyPy, coverage
+.mypy_cache/
+.coverage
+htmlcov/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Git
+*.orig
