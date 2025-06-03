@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'ninja',
     'stores',
     'categories',
-    'products'
+    'products',
+    'sales'
 
 ]
 
