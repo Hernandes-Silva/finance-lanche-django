@@ -1,7 +1,7 @@
 from ninja import Schema
-from datetime import datetime
-from typing import Optional, List
+from typing import List
 from uuid import UUID
+from core.schemas import SchemaBase
 
 class SaleItem(Schema):
     product_uuid: UUID
@@ -10,14 +10,13 @@ class SaleItem(Schema):
 class SaleCreateSchema(Schema):
     list_sale_items: List[SaleItem]
 
-class CategoryUpdateSchema(Schema):
-    name: Optional[str] = None
-    active: Optional[bool] = None
-
-
-class CategorySchema(Schema):
+class HistoricSaleItem(SchemaBase):
     uuid: UUID
     name: str
-    active: bool
-    created_at: datetime
-    store_uuid: str
+    quantity: int
+    price: float
+    category: str
+
+class DeleteResponse(Schema):
+    success: bool
+    message: str

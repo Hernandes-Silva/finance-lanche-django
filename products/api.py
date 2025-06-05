@@ -18,7 +18,7 @@ product_router = Router(tags=["Produtos"])
 
 @product_router.post("/", response=ProductSchema)
 def create_product(request, product_data: ProductCreateSchema):
-    """Criar novo produto de forma assíncrona"""
+    """Criar novo produto"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")
@@ -42,7 +42,7 @@ def create_product(request, product_data: ProductCreateSchema):
 
 @product_router.get("/", response=List[ProductSchema])
 def list_products(request, category_uuid: str = None):
-    """Listar produtos da loja do usuário de forma assíncrona"""
+    """Listar produtos da loja do usuário"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")
@@ -52,7 +52,7 @@ def list_products(request, category_uuid: str = None):
     return [
         {
             **product.__dict__,
-            "category_uuid": str(product.category.uuid),
+            "category_uuid": product.category.uuid,
             "category_name": product.category.name
         }
         for product in products
@@ -61,7 +61,7 @@ def list_products(request, category_uuid: str = None):
 
 @product_router.get("/{product_uuid}", response=ProductSchema)
 def get_product(request, product_uuid: str):
-    """Obter produto específico de forma assíncrona"""
+    """Obter produto específico"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")
@@ -79,7 +79,7 @@ def get_product(request, product_uuid: str):
 
 @product_router.put("/{product_uuid}", response=ProductSchema)
 def update_product(request, product_uuid: str, product_data: ProductUpdateSchema):
-    """Atualizar produto de forma assíncrona"""
+    """Atualizar produto"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")
@@ -113,7 +113,7 @@ def update_product(request, product_uuid: str, product_data: ProductUpdateSchema
 
 @product_router.delete("/{product_uuid}")
 def delete_product(request, product_uuid: str):
-    """Deletar produto de forma assíncrona"""
+    """Deletar produto"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")

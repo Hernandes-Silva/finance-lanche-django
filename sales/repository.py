@@ -1,6 +1,7 @@
 from .models import Sale, SaleItem
 from core.database import BaseRepository
-from .schemas import SaleCreateSchema
+from .schemas import SaleCreateSchema, HistoricSaleItem
+from django.db.models import Sum
 
 from products.repository import ProductRepository
 product_repository = ProductRepository()
@@ -36,7 +37,51 @@ class SalesRepository(BaseRepository):
             )
         except Sale.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_sale_items_by_store(store):
+        items = (
+            SaleItem.objects
+            .filter(sale__store=store)
+            .values('product_id', 'product__name', 'product__price', 'product__category__name')
+            .annotate(total_quantity=Sum('quantity'))
+        )
+
+        return [
+            HistoricSaleItem(
+                    uuid=item["product_id"],
+                    name=item["product__name"],            
+                    quantity=item["total_quantity"], 
+                    price=item["product__price"], 
+                    category=item["product__category__name"]
+            ) for item in items
+        ]
     
     @staticmethod
-    def delete_sale(sale):
-        sale.delete()
+    def remove_1_quantity_in_any_sale_item_by_product_uuid(product_uuid, store):
+        produto = product_repository.get_product_by_uuid(uuid=product_uuid, store=store)
+
+        last_item = (
+            SaleItem.objects
+            .filter(product=produto, sale__store=store)
+            .order_by('-created_at')  # pode usar '-id' também
+            .first()
+        )
+
+        if not last_item:
+            return {"success": False, "message": "Nenhuma venda encontrada para esse produto."}
+
+        if last_item.quantity > 1:
+            last_item.quantity -= 1
+            last_item.save()
+            return {"success": True, "message": "Quantidade reduzida em 1."}
+        else:
+            # quantity == 1, então deletamos o item
+            sale = last_item.sale
+            can_remove_sale =  False if len(sale.items.all()) > 1 else True
+            last_item.delete()
+            
+            if can_remove_sale:
+                sale.delete()
+
+            return {"success": True, "message": "Último item removido, SaleItem excluído."}
