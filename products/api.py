@@ -30,7 +30,7 @@ def create_product(request, product_data: ProductCreateSchema):
     product = product_repository.create_product(
         category,
         product_data.name,
-        product_data.preco
+        product_data.price
     )
     
     return {
@@ -48,14 +48,7 @@ def list_products(request, category_uuid: str = None):
         raise HttpError(404, "Usuário não possui loja")
     
     products = product_repository.get_products_by_store(store, category_uuid)
-    print([
-        {
-            **product.__dict__,
-            "category_uuid": product.category.uuid,
-            "category_name": product.category.name
-        }
-        for product in products
-    ])
+
     return [
         {
             **product.__dict__,

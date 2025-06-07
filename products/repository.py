@@ -3,8 +3,8 @@ from core.database import BaseRepository
 
 class ProductRepository(BaseRepository):
     @staticmethod
-    def create_product(category, name, preco):
-        return Product.objects.create(category=category, name=name, preco=preco)
+    def create_product(category, name, price):
+        return Product.objects.create(category=category, name=name, price=price)
     
     @staticmethod
     def get_products_by_store(store, category_uuid=None):
