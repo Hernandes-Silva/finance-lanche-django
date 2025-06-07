@@ -16,7 +16,7 @@ sales_repository = SalesRepository()
 category_repository = CategoryRepository()
 product_repository = ProductRepository()
 # Auth Router
-sale_router = Router(tags=["Vendas"])
+sale_router = Router()
 
 
 @sale_router.post("/")

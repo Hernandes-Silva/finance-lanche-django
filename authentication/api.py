@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .schemas import *
 from .auth import AuthBearer
 from .repository import AuthRepository
-
+from .jwt import create_access_token
 
 auth = AuthBearer()
 auth_repository = AuthRepository()
@@ -33,7 +33,7 @@ def register(request, user_data: UserCreateSchema):
     return user
 
 
-@auth_router.post("/login")
+@auth_router.post("/login", response=TokenSchema)
 def login_user(request, credentials: LoginSchema):
     """Login do usuário"""
     user = auth_repository.authenticate_user(
@@ -49,14 +49,7 @@ def login_user(request, credentials: LoginSchema):
         raise HttpError(401, "Usuário inativo")
     
     # Em produção, use JWT
-    token = str(user.id)
+    token = create_access_token({"user_id": str(user.id)})
     
-    return {
-        "token": token,
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email
-        }
-    }
+    return {"access_token": token}
 

@@ -13,7 +13,7 @@ from categories.repository import CategoryRepository
 product_repository = ProductRepository()
 category_repository = CategoryRepository()
 # Auth Router
-product_router = Router(tags=["Produtos"])
+product_router = Router()
 
 
 @product_router.post("/", response=ProductSchema)
