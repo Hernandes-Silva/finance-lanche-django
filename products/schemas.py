@@ -17,10 +17,10 @@ class ProductUpdateSchema(Schema):
     active: Optional[bool] = None
 
 
-class ProductSchema(Schema):
+class ProductSchemaOut(Schema):
     uuid: UUID
     name: str
-    price: Decimal
+    price: float
     active: bool
     created_at: datetime
     category_uuid: UUID

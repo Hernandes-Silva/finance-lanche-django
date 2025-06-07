@@ -16,7 +16,7 @@ category_repository = CategoryRepository()
 product_router = Router()
 
 
-@product_router.post("/", response=ProductSchema)
+@product_router.post("/", response=ProductSchemaOut)
 def create_product(request, product_data: ProductCreateSchema):
     """Criar novo produto"""
     store = request.user_store
@@ -40,7 +40,7 @@ def create_product(request, product_data: ProductCreateSchema):
     }
 
 
-@product_router.get("/", response=List[ProductSchema])
+@product_router.get("/", response=List[ProductSchemaOut])
 def list_products(request, category_uuid: str = None):
     """Listar produtos da loja do usuário"""
     store = request.user_store
@@ -48,7 +48,14 @@ def list_products(request, category_uuid: str = None):
         raise HttpError(404, "Usuário não possui loja")
     
     products = product_repository.get_products_by_store(store, category_uuid)
-    
+    print([
+        {
+            **product.__dict__,
+            "category_uuid": product.category.uuid,
+            "category_name": product.category.name
+        }
+        for product in products
+    ])
     return [
         {
             **product.__dict__,
@@ -59,7 +66,7 @@ def list_products(request, category_uuid: str = None):
     ]
 
 
-@product_router.get("/{product_uuid}", response=ProductSchema)
+@product_router.get("/{product_uuid}", response=ProductSchemaOut)
 def get_product(request, product_uuid: str):
     """Obter produto específico"""
     store = request.user_store
@@ -69,7 +76,7 @@ def get_product(request, product_uuid: str):
     product = product_repository.get_product_by_uuid(product_uuid, store)
     if not product:
         raise HttpError(404, "Produto não encontrado")
-    
+
     return {
         **product.__dict__,
         "category_uuid": str(product.category.uuid),
@@ -77,7 +84,7 @@ def get_product(request, product_uuid: str):
     }
 
 
-@product_router.put("/{product_uuid}", response=ProductSchema)
+@product_router.put("/{product_uuid}", response=ProductSchemaOut)
 def update_product(request, product_uuid: str, product_data: ProductUpdateSchema):
     """Atualizar produto"""
     store = request.user_store
