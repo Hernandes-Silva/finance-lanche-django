@@ -2,8 +2,11 @@ from .models import Sale, SaleItem
 from core.database import BaseRepository
 from .schemas import SaleCreateSchema, HistoricSaleItem
 from django.db.models import Sum
+from datetime import date
 
 from products.repository import ProductRepository
+
+
 product_repository = ProductRepository()
 
 class SalesRepository(BaseRepository):
@@ -39,10 +42,15 @@ class SalesRepository(BaseRepository):
             return None
 
     @staticmethod
-    def get_sale_items_by_store(store):
+    def get_sale_items_by_store(store, sale_date: date = None):
+        sales = Sale.objects.filter(store=store)
+
+        if sale_date:
+            sales = sales.filter(sold_at__date=sale_date)
+
         items = (
             SaleItem.objects
-            .filter(sale__store=store)
+            .filter(sale__in=sales)
             .values('product_id', 'product__name', 'product__price', 'product__category__name')
             .annotate(total_quantity=Sum('quantity'))
         )
@@ -53,7 +61,7 @@ class SalesRepository(BaseRepository):
                     name=item["product__name"],            
                     quantity=item["total_quantity"], 
                     price=item["product__price"], 
-                    category=item["product__category__name"]
+                    category_name=item["product__category__name"]
             ) for item in items
         ]
     

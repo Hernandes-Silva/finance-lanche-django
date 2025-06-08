@@ -15,7 +15,7 @@ class HistoricSaleItem(SchemaBase):
     name: str
     quantity: int
     price: float
-    category: str
+    category_name: str
 
 class DeleteResponse(Schema):
     success: bool

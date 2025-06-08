@@ -1,8 +1,9 @@
-from ninja import NinjaAPI, Router
+from ninja import NinjaAPI, Router, Query
 from ninja.errors import HttpError
 from ninja.responses import Response
 from django.contrib.auth.models import User
-from typing import List, Dict
+from typing import List, Dict, Optional
+from datetime import date
 
 from .schemas import *
 from .repository import SalesRepository
@@ -26,28 +27,21 @@ def create_sale(request, payload: SaleCreateSchema):
     if not store:
         raise HttpError(404, "Usuário não possui loja")
     
-    sale_items = []
-    for sale_item in payload.list_sale_items:
-        sale_items.append({
-            "product": product_repository.get_product_by_uuid(sale_item.product_uuid, store),
-            "quantity": sale_item.quantity
-        })
-
-    sales_repository.create_sale(store, sale_items=sale_items)
+    sales_repository.create_sale(store, sale_create=payload)
     
     return Response({"message": "Venda registrada com sucesso!"}, status=201)
 
 @sale_router.get("/historic", response=List[HistoricSaleItem])
-def get_historic_sales(request):
+def get_historic_sales(request, sale_date: Optional[date] = Query(None)):
     """pegar historico de vendas"""
     store = request.user_store
     if not store:
         raise HttpError(404, "Usuário não possui loja")
     
-    return sales_repository.get_sale_items_by_store(store)
+    return sales_repository.get_sale_items_by_store(store, sale_date=sale_date)
 
 
-@sale_router.delete("/remove/{product_uuid}", response=DeleteResponse)
+@sale_router.delete("/remove/product/{product_uuid}", response=DeleteResponse)
 def remove_product_in_sale_item(request, product_uuid: str):
     """Deletar um produto do um historico de vendas"""
     store = request.user_store
