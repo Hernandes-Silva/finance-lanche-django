@@ -91,7 +91,7 @@ def update_product(request, product_uuid: str, product_data: ProductUpdateSchema
     update_data = product_data.dict(exclude_unset=True)
     
     if 'category_uuid' in update_data:
-        category = product_repository.get_category_by_uuid(
+        category = category_repository.get_category_by_uuid(
             update_data.pop('category_uuid'), 
             store
         )
