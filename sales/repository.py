@@ -1,8 +1,9 @@
 from .models import Sale, SaleItem
 from core.database import BaseRepository
-from .schemas import SaleCreateSchema, HistoricSaleItem
-from django.db.models import Sum
-from datetime import date
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
+from .schemas import SaleCreateSchema, HistoricSaleItem, LineChatFilterType, ResponseLineChartType
+from django.db.models import Sum, F
+from datetime import date, timedelta
 
 from products.repository import ProductRepository
 
@@ -93,3 +94,47 @@ class SalesRepository(BaseRepository):
                 sale.delete()
 
             return {"success": True, "message": "Último item removido, SaleItem excluído."}
+    
+    @staticmethod
+    def get_sales_by_date_and_type(store, start_date: date, end_date: date, type_filter: LineChatFilterType):
+        trunc_func = {
+            LineChatFilterType.day: TruncDay,
+            LineChatFilterType.week: TruncWeek,
+            LineChatFilterType.month: TruncMonth,
+            LineChatFilterType.year: TruncYear,
+        }[type_filter]
+
+        sale_items = (
+            SaleItem.objects
+            .filter(
+                sale__store=store,
+                sale__sold_at__range=[start_date, end_date+timedelta(days=1)]
+            )
+            .annotate(period=trunc_func('sale__sold_at'))
+            .values('period')
+            .annotate(
+                numberProductsSales=Sum('quantity'),
+                valueProductsSales=Sum(F('quantity') * F('product__price'))
+            )
+            .order_by('period')
+        )
+
+        result = []
+        for item in sale_items:
+            period = item['period']
+            if type_filter == LineChatFilterType.day:
+                label = period.strftime("%d/%m")
+            elif type_filter == LineChatFilterType.week:
+                label = period.strftime("%d/%m")  # semana começa nesse dia
+            elif type_filter == LineChatFilterType.month:
+                label = period.strftime("Mês %m")
+            else:  # year
+                label = period.strftime("Ano %Y")
+
+            result.append(ResponseLineChartType(
+                label=label,
+                numberProductsSales=item['numberProductsSales'],
+                valueProductsSales=item['valueProductsSales']
+            ))
+
+        return result

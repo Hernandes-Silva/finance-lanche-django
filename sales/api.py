@@ -51,3 +51,16 @@ def remove_product_in_sale_item(request, product_uuid: str):
     response = sales_repository.remove_1_quantity_in_any_sale_item_by_product_uuid(store=store, product_uuid=product_uuid)
 
     return response
+
+
+@sale_router.post("/chart/line", response=List[ResponseLineChartType])
+def get_line_chart_data(request, data: LineChartRequest):
+    store = request.user_store
+    if not store:
+        raise HttpError(404, "Loja não encontrada")
+    
+
+
+    response = sales_repository.get_sales_by_date_and_type(store, data.start_date, data.end_date, data.filter_type)
+
+    return response
