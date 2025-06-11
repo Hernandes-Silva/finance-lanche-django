@@ -58,9 +58,17 @@ def get_line_chart_data(request, data: LineChartRequest):
     store = request.user_store
     if not store:
         raise HttpError(404, "Loja não encontrada")
-    
-
 
     response = sales_repository.get_sales_by_date_and_type(store, data.start_date, data.end_date, data.filter_type)
+
+    return response
+
+@sale_router.post("/chat/bar", response=List[ResponseBarChartType])
+def get_bar_chart_data(request, data: BarChartRequest):
+    store = request.user_store
+    if not store:
+        raise HttpError(404, "Loja não encontrada")
+
+    response = sales_repository.get_sales_by_range_date(store, data.start_date, data.end_date)
 
     return response

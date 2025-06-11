@@ -25,7 +25,6 @@ class DeleteResponse(Schema):
 
 class LineChatFilterType(str, Enum):
     day = 'day'
-    week = 'week'
     month = 'month'
     year = 'year'
 
@@ -38,3 +37,14 @@ class ResponseLineChartType(Schema):
     label: str
     numberProductsSales: int
     valueProductsSales: float
+
+class BarChartRequest(Schema):
+    start_date: date
+    end_date: date
+
+
+class ResponseBarChartType(Schema):
+    productName: str
+    numberProductsSales: int
+    valueProductsSales: float
+    percentageProductsSales: float

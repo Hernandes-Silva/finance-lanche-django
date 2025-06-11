@@ -1,9 +1,10 @@
 from .models import Sale, SaleItem
 from core.database import BaseRepository
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
-from .schemas import SaleCreateSchema, HistoricSaleItem, LineChatFilterType, ResponseLineChartType
-from django.db.models import Sum, F
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear, Coalesce
+from .schemas import SaleCreateSchema, HistoricSaleItem, LineChatFilterType, ResponseLineChartType, ResponseBarChartType
+from django.db.models import Sum, F, DecimalField
 from datetime import date, timedelta
+from decimal import Decimal
 
 from products.repository import ProductRepository
 
@@ -85,7 +86,6 @@ class SalesRepository(BaseRepository):
             last_item.save()
             return {"success": True, "message": "Quantidade reduzida em 1."}
         else:
-            # quantity == 1, então deletamos o item
             sale = last_item.sale
             can_remove_sale =  False if len(sale.items.all()) > 1 else True
             last_item.delete()
@@ -119,22 +119,72 @@ class SalesRepository(BaseRepository):
             .order_by('period')
         )
 
+        sales_by_period = {item['period'].date(): item for item in sale_items}
+
         result = []
-        for item in sale_items:
-            period = item['period']
+        current = start_date
+
+        def get_label(dt: date) -> str:
             if type_filter == LineChatFilterType.day:
-                label = period.strftime("%d/%m")
-            elif type_filter == LineChatFilterType.week:
-                label = period.strftime("%d/%m")  # semana começa nesse dia
+                return dt.strftime("%d/%m")
             elif type_filter == LineChatFilterType.month:
-                label = period.strftime("Mês %m")
+                return f"{dt.month}"
             else:  # year
-                label = period.strftime("Ano %Y")
+                return f"{dt.year}"
+
+        def increment(dt: date):
+            if type_filter == LineChatFilterType.day:
+                return dt + timedelta(days=1)
+            elif type_filter == LineChatFilterType.month:
+                return (dt.replace(day=1) + timedelta(days=32)).replace(day=1)
+            else:  # year
+                return dt.replace(month=1, day=1).replace(year=dt.year + 1)
+
+        while current <= end_date:
+            found = sales_by_period.get(current)
+            number = found['numberProductsSales'] if found else 0
+            value = found['valueProductsSales'] if found else 0
 
             result.append(ResponseLineChartType(
-                label=label,
+                label=get_label(current),
+                numberProductsSales=number,
+                valueProductsSales=value,
+            ))
+
+            current = increment(current)
+
+        return result
+
+
+    @staticmethod
+    def get_sales_by_range_date(store, start_date: date, end_date: date):
+        sales_items = (
+            SaleItem.objects
+            .filter(
+                sale__store=store,
+                sale__sold_at__date__range=[start_date, end_date]
+            )
+            .values('product__name')
+            .annotate(
+                numberProductsSales=Coalesce(Sum('quantity'), 0),
+                valueProductsSales=Coalesce(
+                    Sum(F('quantity') * F('product__price'), output_field=DecimalField()),
+                    Decimal('0.00')
+                )
+            )
+        )
+
+        total_value = sum(item['valueProductsSales'] for item in sales_items) or Decimal('1.00')
+
+        sorted_items = sorted(sales_items, key=lambda x: x['numberProductsSales'], reverse=True)
+
+        result = []
+        for item in sorted_items:
+            result.append(ResponseBarChartType(
+                productName=item['product__name'],
                 numberProductsSales=item['numberProductsSales'],
-                valueProductsSales=item['valueProductsSales']
+                valueProductsSales=float(item['valueProductsSales']),
+                percentageProductsSales=round((item['valueProductsSales'] / total_value) * 100, 2)
             ))
 
         return result
