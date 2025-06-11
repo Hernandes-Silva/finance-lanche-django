@@ -63,7 +63,7 @@ def get_line_chart_data(request, data: LineChartRequest):
 
     return response
 
-@sale_router.post("/chat/bar", response=List[ResponseBarChartType])
+@sale_router.post("/chart/bar", response=List[ResponseBarChartType])
 def get_bar_chart_data(request, data: BarChartRequest):
     store = request.user_store
     if not store:

@@ -99,7 +99,6 @@ class SalesRepository(BaseRepository):
     def get_sales_by_date_and_type(store, start_date: date, end_date: date, type_filter: LineChatFilterType):
         trunc_func = {
             LineChatFilterType.day: TruncDay,
-            LineChatFilterType.week: TruncWeek,
             LineChatFilterType.month: TruncMonth,
             LineChatFilterType.year: TruncYear,
         }[type_filter]
@@ -128,7 +127,7 @@ class SalesRepository(BaseRepository):
             if type_filter == LineChatFilterType.day:
                 return dt.strftime("%d/%m")
             elif type_filter == LineChatFilterType.month:
-                return f"{dt.month}"
+                return f"{dt.month}/{str(dt.year)[-2:]}"
             else:  # year
                 return f"{dt.year}"
 
