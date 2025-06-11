@@ -1,7 +1,7 @@
 from .models import Sale, SaleItem
 from core.database import BaseRepository
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear, Coalesce
-from .schemas import SaleCreateSchema, HistoricSaleItem, LineChatFilterType, ResponseLineChartType, ResponseBarChartType
+from .schemas import SaleCreateSchema, HistoricSaleItem, LineChatFilterType, ResponseLineChartType, ResponseBarChartType, ResponsePieChartType
 from django.db.models import Sum, F, DecimalField
 from datetime import date, timedelta
 from decimal import Decimal
@@ -171,19 +171,51 @@ class SalesRepository(BaseRepository):
                     Decimal('0.00')
                 )
             )
+            .order_by('-numberProductsSales')
         )
 
-        total_value = sum(item['valueProductsSales'] for item in sales_items) or Decimal('1.00')
-
-        sorted_items = sorted(sales_items, key=lambda x: x['numberProductsSales'], reverse=True)
+        total_value = sum(item['numberProductsSales'] for item in sales_items) or Decimal('1.00')
 
         result = []
-        for item in sorted_items:
+        for item in sales_items:
             result.append(ResponseBarChartType(
                 productName=item['product__name'],
                 numberProductsSales=item['numberProductsSales'],
                 valueProductsSales=float(item['valueProductsSales']),
-                percentageProductsSales=round((item['valueProductsSales'] / total_value) * 100, 2)
+                percentageProductsSales=round((item['numberProductsSales'] / total_value) * 100, 2)
+            ))
+
+        return result
+    
+    @staticmethod
+    def get_categories_sales_by_range_date(store, start_date: date, end_date: date):
+        sales_items = (
+            SaleItem.objects
+            .filter(
+                sale__store=store,
+                sale__sold_at__date__range=[start_date, end_date]
+            )
+            .values('product__category__name')
+            .annotate(
+                numberProductsSales=Coalesce(Sum('quantity'), 0),
+                valueProductsSales=Coalesce(
+                    Sum(F('quantity') * F('product__price'), output_field=DecimalField()),
+                    Decimal('0.00')
+                )
+            )
+            .order_by('-numberProductsSales')
+        )
+
+        total_value = sum(item['numberProductsSales'] for item in sales_items) or Decimal('1.00')
+
+
+        result = []
+        for item in sales_items:
+            result.append(ResponsePieChartType(
+                categoryName=item['product__category__name'],
+                numberProductsSales=item['numberProductsSales'],
+                valueProductsSales=item['valueProductsSales'],
+                percentageProductsSales=round((item['numberProductsSales'] / total_value) * 100, 2)
             ))
 
         return result

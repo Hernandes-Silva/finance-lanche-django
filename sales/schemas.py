@@ -38,13 +38,24 @@ class ResponseLineChartType(Schema):
     numberProductsSales: int
     valueProductsSales: float
 
-class BarChartRequest(Schema):
+class InitDateAndEndDateRequest(Schema):
     start_date: date
     end_date: date
 
+class BarChartRequest(InitDateAndEndDateRequest):
+    ...
+
+class PieChartRequest(InitDateAndEndDateRequest):
+    ...
 
 class ResponseBarChartType(Schema):
     productName: str
+    numberProductsSales: int
+    valueProductsSales: float
+    percentageProductsSales: float
+
+class ResponsePieChartType(Schema):
+    categoryName: str
     numberProductsSales: int
     valueProductsSales: float
     percentageProductsSales: float

@@ -72,3 +72,14 @@ def get_bar_chart_data(request, data: BarChartRequest):
     response = sales_repository.get_sales_by_range_date(store, data.start_date, data.end_date)
 
     return response
+
+
+@sale_router.post("/chart/pie", response=List[ResponsePieChartType])
+def get_pie_chart_data(request, data: PieChartRequest):
+    store = request.user_store
+    if not store:
+        raise HttpError(404, "Loja não encontrada")
+
+    response = sales_repository.get_categories_sales_by_range_date(store, data.start_date, data.end_date)
+
+    return response
